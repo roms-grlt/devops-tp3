@@ -1,3 +1,12 @@
-#SPDX-License-Identifier: MIT-0
----
-# tasks file for roles/app
+- name: Run backend container
+  community.docker.docker_container:
+    name: simple-api
+    image: "{{ dockerhub_username }}/tp-devops-simple-api:latest"
+    state: started
+    pull: true
+    restart_policy: unless-stopped
+    env:
+      DATABASE_HOST: database
+      DATABASE_PASSWORD: "{{ db_password }}"
+    networks:
+      - name: app-network

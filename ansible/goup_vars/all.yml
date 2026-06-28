@@ -1,0 +1,2 @@
+dockerhub_username: "ton_username_dockerhub"
+db_password: "{{ vault_db_password }}"

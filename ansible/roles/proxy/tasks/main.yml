@@ -1,3 +1,11 @@
-#SPDX-License-Identifier: MIT-0
----
-# tasks file for roles/proxy
+- name: Run httpd proxy container
+  community.docker.docker_container:
+    name: httpd
+    image: "{{ dockerhub_username }}/tp-devops-httpd:latest"
+    state: started
+    pull: true
+    restart_policy: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - name: app-network

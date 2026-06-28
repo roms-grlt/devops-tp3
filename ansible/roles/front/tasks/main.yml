@@ -1,3 +1,9 @@
-#SPDX-License-Identifier: MIT-0
----
-# tasks file for roles/front
+- name: Run frontend container
+  community.docker.docker_container:
+    name: front
+    image: "{{ dockerhub_username }}/tp-devops-front:latest"
+    state: started
+    pull: true
+    restart_policy: unless-stopped
+    networks:
+      - name: app-network
