@@ -32,7 +32,7 @@ jobs:
           ls -la $GITHUB_WORKSPACE/vault_pass
           echo "group_vars content:"
           cat $GITHUB_WORKSPACE/ansible/group_vars/all.yml
-          cat $GITHUB_WORKSPACE/ansible/group_vars/all.vault.yml
+          cat $GITHUB_WORKSPACE/ansible/group_vars/vault.yml
 
       - name: Run Ansible playbook
         working-directory: ./ansible
