@@ -67,7 +67,7 @@ jobs:
 
       # Optionnel : seulement si tu utilises Ansible Vault
       - name: Write Ansible Vault password
-        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > vault_pass
+        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $GITHUB_WORKSPACE/vault_pass
 
       - name: Run Ansible playbook
         working-directory: ./ansible
