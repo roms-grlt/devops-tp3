@@ -69,6 +69,16 @@ jobs:
       - name: Write Ansible Vault password
         run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $GITHUB_WORKSPACE/vault_pass
 
+      - name: Debug vault
+        run: |
+          echo "vault_pass content:"
+          cat $GITHUB_WORKSPACE/vault_pass
+          echo "vault_pass exists:"
+          ls -la $GITHUB_WORKSPACE/vault_pass
+          echo "group_vars content:"
+          cat $GITHUB_WORKSPACE/ansible/group_vars/all.yml
+          cat $GITHUB_WORKSPACE/ansible/group_vars/all.vault.yml
+
       - name: Run Ansible playbook
         working-directory: ./ansible
         env:
