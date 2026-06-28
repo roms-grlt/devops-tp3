@@ -1,0 +1,90 @@
+name: Build, Push and Deploy
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI devops 2025 - Test Backend"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  build-and-push-docker-image:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'}}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build image and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./simple-api
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
+          push: true
+
+      - name: Build image and push database
+        uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
+          push: true
+
+      - name: Build image and push httpd
+        uses: docker/build-push-action@v6
+        with:
+          context: ./http-server
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
+          push: true
+
+      - name: Build image and push front
+        uses: docker/build-push-action@v6
+        with:
+          context: ./front
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-front:latest
+          push: true
+
+  deploy:
+    needs: build-and-push-docker-image
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.docker
+
+      - name: Write SSH private key
+        run: |
+          echo "${{ secrets.ANSIBLE_SSH_KEY }}" > ansible_key
+          chmod 600 ansible_key
+
+      # Optionnel : seulement si tu utilises Ansible Vault
+      - name: Write Ansible Vault password
+        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > $GITHUB_WORKSPACE/vault_pass
+
+      - name: Debug vault
+        run: |
+          echo "vault_pass content:"
+          cat $GITHUB_WORKSPACE/vault_pass
+          echo "vault_pass exists:"
+          ls -la $GITHUB_WORKSPACE/vault_pass
+          echo "group_vars content:"
+          cat $GITHUB_WORKSPACE/ansible/group_vars/all.yml
+          cat $GITHUB_WORKSPACE/ansible/group_vars/all.vault.yml
+
+      - name: Run Ansible playbook
+        working-directory: ./ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "false"
+        run: |
+          ansible-playbook -i inventories/setup.yml playbook_roles.yml \
+            -e "ansible_ssh_private_key_file=$GITHUB_WORKSPACE/ansible_key" \
+            -e "ansible_user=${{ secrets.ANSIBLE_USER }}" \
+            --vault-password-file $GITHUB_WORKSPACE/vault_pass
